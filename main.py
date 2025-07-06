@@ -20,7 +20,7 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 
 # --- Constants ---
-PDF_PATH = "/home/jones/rag_project/The Finance Bill 2025.pdf"
+PDF_PATH = "https://github.com/EmmanuelKiriinya/rag_project/blob/master/The%20Finance%20Bill%202025.pdf"
 CHROMA_DIR = "/home/jones/rag_project/finance_bill_vectorstore"
 MODEL_NAME = "meta-llama/llama-4-maverick-17b-128e-instruct"
 
