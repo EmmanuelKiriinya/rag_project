@@ -1,0 +1,19 @@
+# Ignore your virtual environment
+ragvenv/
+
+# Ignore environment variables
+.env
+*.env
+
+# Python cache and temp files
+__pycache__/
+*.py[cod]
+*.log
+
+# Ignore editor and OS-specific files
+.DS_Store
+.vscode/
+.idea/
+
+# Ignore Chroma vector store (can be rebuilt)
+finance_bill_vectorstore/
