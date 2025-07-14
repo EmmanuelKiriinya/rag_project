@@ -20,7 +20,7 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 
 # --- Constants ---
-PDF_PATH = "data/The Finance Bill 2025.pdf"
+PDF_PATH = "data/finance_bill_2025.pdf"
 CHROMA_DIR = "finance_bill_vectorstore"
 MODEL_NAME = "meta-llama/llama-4-maverick-17b-128e-instruct"
 
@@ -50,7 +50,7 @@ if not os.path.exists(os.path.join(CHROMA_DIR, "chroma.sqlite3")):
 # --- Load and Process PDF ---
 @st.cache_resource
 def build_retriever():
-    loader = PyPDFLoader("data/finance_bill.pdf")  # update this if using a different path
+    loader = PyPDFLoader(PDF_PATH)  # update this if using a different path
     docs = loader.load()
 
     parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=700)
