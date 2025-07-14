@@ -49,29 +49,49 @@ if not os.path.exists(os.path.join(CHROMA_DIR, "chroma.sqlite3")):
 
 # --- Load and Process PDF ---
 @st.cache_resource
+from langchain.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.retrievers import ParentDocumentRetriever
+from langchain.storage import InMemoryStore
+
 def build_retriever():
-    # Load PDF
-    loader = PyPDFLoader(PDF_PATH)
+    loader = PyPDFLoader("data/finance_bill.pdf")  # update this if using a different path
     docs = loader.load()
 
-    # Create text splitters
     parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=700)
     child_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=700)
 
-    # Embedding model
-    embedder = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en")  # Or whatever model you're using
+    embedder = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en")
 
-    # FAISS is in-memory by default
+    # Step 1: Split into parent chunks
+    parent_docs = parent_splitter.split_documents(docs)
+
+    # Step 2: Split into child chunks and attach parent IDs
+    child_docs = []
+    for i, parent_doc in enumerate(parent_docs):
+        parent_id = str(i)
+        children = child_splitter.split_documents([parent_doc])
+        for child in children:
+            child.metadata["parent_id"] = parent_id
+        child_docs.extend(children)
+
+    # Step 3: Embed child docs and create vectorstore
+    vectorstore = FAISS.from_documents(child_docs, embedder)
+
+    # Step 4: Create document store with parent docs
     store = InMemoryStore()
-    retriever = ParentDocumentRetriever.from_components(
-        vectorstore_cls=FAISS,
-        embedding=embedder,
+    store.mset([(str(i), doc) for i, doc in enumerate(parent_docs)])
+
+    # Step 5: Build ParentDocumentRetriever manually
+    retriever = ParentDocumentRetriever(
+        vectorstore=vectorstore,
         docstore=store,
         child_splitter=child_splitter,
         parent_splitter=parent_splitter,
     )
 
-    retriever.add_documents(docs)
     return retriever
 
 retriever = build_retriever()
