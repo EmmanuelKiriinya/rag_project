@@ -49,13 +49,6 @@ if not os.path.exists(os.path.join(CHROMA_DIR, "chroma.sqlite3")):
 
 # --- Load and Process PDF ---
 @st.cache_resource
-from langchain.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
-from langchain.retrievers import ParentDocumentRetriever
-from langchain.storage import InMemoryStore
-
 def build_retriever():
     loader = PyPDFLoader("data/finance_bill.pdf")  # update this if using a different path
     docs = loader.load()
