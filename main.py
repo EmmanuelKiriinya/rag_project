@@ -2,10 +2,10 @@ import streamlit as st
 import os
 import shutil
 from dotenv import load_dotenv
-
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import FAISS
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
 from langchain.retrievers import ParentDocumentRetriever
 from langchain.storage import InMemoryStore
 from langchain.memory import ConversationBufferMemory
@@ -50,24 +50,25 @@ if not os.path.exists(os.path.join(CHROMA_DIR, "chroma.sqlite3")):
 # --- Load and Process PDF ---
 @st.cache_resource
 def build_retriever():
+    # Load PDF
     loader = PyPDFLoader(PDF_PATH)
     docs = loader.load()
 
+    # Create text splitters
     parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=700)
     child_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=700)
 
-    store = InMemoryStore()
-    vectorstore = Chroma(
-        collection_name="finance_bill_chunks",
-        embedding_function=embedder,
-        persist_directory=CHROMA_DIR
-    )
+    # Embedding model
+    embedder = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en")  # Or whatever model you're using
 
-    retriever = ParentDocumentRetriever(
-        vectorstore=vectorstore,
+    # FAISS is in-memory by default
+    store = InMemoryStore()
+    retriever = ParentDocumentRetriever.from_components(
+        vectorstore_cls=FAISS,
+        embedding=embedder,
         docstore=store,
         child_splitter=child_splitter,
-        parent_splitter=parent_splitter
+        parent_splitter=parent_splitter,
     )
 
     retriever.add_documents(docs)
